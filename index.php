@@ -1,66 +1,7 @@
 <?php
 session_start();
 include ('auth.php');
-
-$message = '';
-
-// Manejar el registro de usuario
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['register'])) {
-    $username = $_POST['username'];
-    $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
-    $dni = $_POST['dni'];
-    $nombre = $_POST['nombre'];
-    $apellido = $_POST['apellido'];
-    $correo = $_POST['correo'];
-    $telefono = $_POST['telefono'];
-
-    $stmt = $db->prepare('INSERT INTO users (username, password, dni, nombre, apellido, correo, telefono) VALUES (:username, :password, :dni, :nombre, :apellido, :correo, :telefono)');
-    $stmt->bindValue(':username', $username, SQLITE3_TEXT);
-    $stmt->bindValue(':password', $password, SQLITE3_TEXT);
-    $stmt->bindValue(':dni', $dni, SQLITE3_TEXT);
-    $stmt->bindValue(':nombre', $nombre, SQLITE3_TEXT);
-    $stmt->bindValue(':apellido', $apellido, SQLITE3_TEXT);
-    $stmt->bindValue(':correo', $correo, SQLITE3_TEXT);
-    $stmt->bindValue(':telefono', $telefono, SQLITE3_TEXT);
-
-    try {
-        $result = $stmt->execute();
-        if ($result) {
-            $message = "Usuario registrado con éxito.";
-        } else {
-            $message = "Error al registrar el usuario.";
-        }
-    } catch (Exception $e) {
-        $message = "Error: " . $e->getMessage();
-    }
-}
-
-// Manejar el inicio de sesión
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['login'])) {
-    $username = $_POST['login_username'];
-    $password = $_POST['login_password'];
-
-    $stmt = $db->prepare('SELECT * FROM users WHERE username = :username');
-    $stmt->bindValue(':username', $username, SQLITE3_TEXT);
-    $result = $stmt->execute();
-    $user = $result->fetchArray(SQLITE3_ASSOC);
-
-    if ($user && password_verify($password, $user['password'])) {
-        $_SESSION['user_id'] = $user['id'];
-        $message = "Inicio de sesión exitoso.";
-    } else {
-        $message = "Usuario o contraseña incorrectos.";
-    }
-}
-
-// Manejar el cierre de sesión
-if (isset($_GET['logout'])) {
-    session_destroy();
-    header("Location: " . $_SERVER['PHP_SELF']);
-    exit();
-}
 ?>
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -118,19 +59,19 @@ if (isset($_GET['logout'])) {
             margin-bottom: 20px;
             border-radius: 4px;
         }
+        .clickable-span {
+            color: blue;
+            font-weight: bold;
+            text-decoration: underline;
+            cursor: pointer; /* Cambia el cursor a una mano */
+        }
     </style>
 </head>
 <body>
+
     <div class="container">
         <h1>Registro y Acceso de Usuario</h1>
-        
-        <?php if ($message): ?>
-            <div class="message"><?php echo $message; ?></div>
-        <?php endif; ?>
-
-        <?php if (isset($_SESSION['user_id'])): ?>
-            <p>Has iniciado sesión. <a href="?logout=1">Cerrar sesión</a></p>
-        <?php else: ?>
+        <div class="div" id="regis">
             <h2>Registro de Usuario</h2>
             <form method="post" action="#">
                 <input type="email" name="correo" placeholder="Correo electrónico" required>
@@ -141,14 +82,40 @@ if (isset($_GET['logout'])) {
                 <input type="tel" name="telefono" placeholder="Teléfono" required>
                 <input type="submit" name="register" value="Registrar">
             </form>
-
+            <span class="clickable-span" onclick="showForm1()">Ya estas registrado?</span>
+        </div>
+        <div class="div" id="formLog">
             <h2>Iniciar Sesión</h2>
-            <form method="post" action="#">
-                <input type="text" name="login_username" placeholder="Usuario" required>
-                <input type="password" name="login_password" placeholder="Contraseña" required>
-                <input type="submit" name="login" value="Iniciar Sesión">
-            </form>
-        <?php endif; ?>
+                <form method="post" action="#">
+                    <input type="text" name="login_username" placeholder="Usuario" required>
+                    <input type="password" name="login_password" placeholder="Contraseña" required>
+                    <input type="submit" name="login" value="Iniciar Sesión">
+                </form>
+            <span class="clickable-span" onclick="showForm()">Regístrate aquí</span>
+        </div>
+            
     </div>
+    <script>
+    // Función para mostrar el formulario de registro
+    document.addEventListener("DOMContentLoaded", function() {
+        document.getElementById("regis").style.display = "none"; 
+    });
+        function showForm() {
+            var form = document.getElementById("regis");
+            if (form.style.display === "none" || form.style.display === "") {
+            form.style.display = "block"; // Muestra el formulario
+        } else {
+            form.style.display = "none"; // Oculta el formulario
+        }
+        }
+        function showForm1() {
+            var form = document.getElementById("formLog");
+            if (form.style.display === "none" || form.style.display === "") {
+            form.style.display = "block"; // Muestra el formulario
+        } else {
+            form.style.display = "none"; // Oculta el formulario
+        }
+        }
+    </script>
 </body>
 </html>
